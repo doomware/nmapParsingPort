@@ -1,12 +1,12 @@
-
-# Created by https://www.toptal.com/developers/gitignore/api/vscode
-# Edit at https://www.toptal.com/developers/gitignore?templates=vscode
-
 ### vscode ###
 .vscode/*
-!.vscode/launch.json
+.vscode/launch.json
 
 ### env ###
 env/*
 
-# End of https://www.toptal.com/developers/gitignore/api/vscode
+test*.py
+
+### imgs ###
+docs/
+docs/*.png

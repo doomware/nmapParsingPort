@@ -4,14 +4,12 @@
 import argparse
 import re
 import sys
-import pyperclip
+
 import colorama
+import pyperclip
 
 colorama.init()
-RED = colorama.Fore.RED
-BLUE = colorama.Fore.BLUE
-BLACK = colorama.Fore.BLACK
-YELLOW = colorama.Fore.YELLOW
+RED, BLUE, BLACK, YELLOW = colorama.Fore.RED,colorama.Fore.BLUE,colorama.Fore.BLACK,colorama.Fore.YELLOW
 
 parser = argparse.ArgumentParser()
 parser.add_argument("file", help="Name of nmap grep file")
@@ -26,46 +24,28 @@ def tableView(ports, services):
 	for port, service in zip(ports, services):
 		print(f"\t{port}\t{service}")
 
-def getHost(txt):
-	global host
-	firstDelimiter = "Ports: "
-	secondDelimiter = "Host: "
-	thirdDelimiter = "("
-	host = txt[len(secondDelimiter):txt.find(firstDelimiter)]
-	blankHost = host.find(thirdDelimiter)
-	lenHost = len(host) - blankHost
-	if lenHost <= 4:
-		host = host[:-lenHost]
-
-def quitJunk(txt):
-	firstDelimiter = "Ports: "
-	secondDelimiter = "Ignored"
-	lenPorts = len(firstDelimiter)
-	txt = txt.strip()
-	portPos = txt.find(firstDelimiter)
-	ignorePos = txt.find(secondDelimiter)
-	lenTxt = len(txt)
-	cutPos = lenTxt - ignorePos
-	portPos = lenPorts + portPos
-	txt = txt[portPos:-cutPos]
-	return txt
-
-def clipboard(ports):
-	pyperclip.copy(ports)
-	#print(BLUE,"-"*30)
-	print(BLUE,"[*] Ports copied to clipboard")
-
-def getServices(i):
-	service = re.search(r'//(.*?)///', i).group(1)
-	return service
-
-def parsingPorts(i):
-	port = re.search(r'(.*?)/', i).group(1)
-	return port
+def get_open(line):
+	""" 
+	This function receives the iterated line of the grep file and adds the ports and services that are open to a list 
+	"""
+	line = "".join(line) # Convierte de lista a str para poder despues dividir los puertos
+	line = line.split(", ") # Corta la linea por las comas, separando los puertos
+	for i in line:
+		if "open" in i:
+			port = "".join(re.findall(r"(.*\d)/", i)).strip() # Regex para obtener el puerto en caso de estar abierto
+			service = "".join(re.findall(r"//(.*)///",i)).strip() # Regex para obtener el servicio de la linea
+			arrayPorts.append(port) # Se añade a la lista 'arrayPorts'
+			arrayServices.append(service) # Se añade a la lista 'arrayServices'
+		else:
+			pass
 
 def main(namefile):
+	"""
+	The Main function first establishes a counter at 0, then tries to open the past grep file as an argument, and with a for cycle you start touring that file, if the file is not grepable ends the program. Then go through until it finds the line that contains the ports and calls the function 'get_open' passing as argument 'l' 
+	"""
 	global arrayPorts
 	global arrayServices
+	global host
 	lineCount = 0
 	arrayPorts = []
 	arrayServices = []
@@ -80,22 +60,9 @@ def main(namefile):
 				sys.exit(0)
 			if l.startswith("Host:"):
 				if "Ports" in l:
-					getHost(l)
-					array = quitJunk(l)
-					array = array.split(", ")
-					#print(array)
-					for i in array:
-						try:
-							if "filtered" not in i:
-								if "closed" not in i:
-									port = parsingPorts(i)
-									arrayPorts.append(port)
-									service = getServices(i)
-									arrayServices.append(service)
-						except:
-							pass
-		
-
+					host = "".join(re.findall(r"Host: (.*)\tPorts:", l)) # Quita todas las palabras innecesarias, dejando solamente el host
+					l = re.findall(r"Ports: (.*)\tIgnored", l) # Quita todas las palabras innecesarias, dejando solamente los puertos
+					get_open(l)
 		file.close()
 	except FileNotFoundError:
 		print("\n",RED,"[!] No such file or directory: {}".format(nameFile))
@@ -103,13 +70,10 @@ def main(namefile):
 
 if __name__ == '__main__':
 	nameFile = args.file
-	#nameFile = "nmapgrep"
 	boolPort = True
 	boolService = args.s
 	boolClipboard = args.c
 	boolTable = args.t
-	#boolTable = True
-	#print("\n")
 	main(nameFile)
 	print("\n [*] Host:\t",host,"\n")
 	ports = ",".join(arrayPorts)
@@ -127,9 +91,9 @@ if __name__ == '__main__':
 			print(" [*] Ports:\t",ports,"\n")
 		if boolService:
 			if services != "":
-				#services = ",".join(services)
 				print(" [*] Services:\t",services)
 			else:
 				services = f"{YELLOW}[!] No services"	
 	if boolClipboard:
-		clipboard(ports)
+		pyperclip.copy(ports)
+		print(BLUE,"[*] Ports copied to clipboard")
