@@ -61,6 +61,8 @@ def main(namefile):
 			if l.startswith("Host:"):
 				if "Ports" in l:
 					host = "".join(re.findall(r"Host: (.*)\tPorts:", l)) # Remove all unnecessary words, leaving only the host 
+					if host.endswith("()"):
+						host = host[:-2] # Quit the brackets in empty hostname
 					line = re.findall(r"Ports: (.*)\tIgnored", l) # Remove all unnecessary words, leaving only ports
 					if "".join(line) == "":
 						line = re.findall(r"Ports:(.*)", l) # In case it doesn't work in regex this may work 
