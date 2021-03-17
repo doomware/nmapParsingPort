@@ -28,14 +28,14 @@ def get_open(line):
 	""" 
 	This function receives the iterated line of the grep file and adds the ports and services that are open to a list 
 	"""
-	line = "".join(line) # Convierte de lista a str para poder despues dividir los puertos
-	line = line.split(", ") # Corta la linea por las comas, separando los puertos
+	line = "".join(line) # Convert from list to str to be able to split the ports later 
+	line = line.split(", ") # Cut the line by the commas, separating the ports
 	for i in line:
 		if "open" in i:
-			port = "".join(re.findall(r"(.*\d)/", i)).strip() # Regex para obtener el puerto en caso de estar abierto
-			service = "".join(re.findall(r"//(.*)///",i)).strip() # Regex para obtener el servicio de la linea
-			arrayPorts.append(port) # Se añade a la lista 'arrayPorts'
-			arrayServices.append(service) # Se añade a la lista 'arrayServices'
+			port = "".join(re.findall(r"(.*\d)/", i)).strip() # Regex to get the port if it is open 
+			service = "".join(re.findall(r"//(.*)///",i)).strip() # Regex to get the service on the line 
+			arrayPorts.append(port) # It is added to the 'arrayPorts' list 
+			arrayServices.append(service) # It is added to the 'arrayServices' list 
 		else:
 			pass
 
@@ -60,9 +60,11 @@ def main(namefile):
 				sys.exit(0)
 			if l.startswith("Host:"):
 				if "Ports" in l:
-					host = "".join(re.findall(r"Host: (.*)\tPorts:", l)) # Quita todas las palabras innecesarias, dejando solamente el host
-					l = re.findall(r"Ports: (.*)\tIgnored", l) # Quita todas las palabras innecesarias, dejando solamente los puertos
-					get_open(l)
+					host = "".join(re.findall(r"Host: (.*)\tPorts:", l)) # Remove all unnecessary words, leaving only the host 
+					line = re.findall(r"Ports: (.*)\tIgnored", l) # Remove all unnecessary words, leaving only ports
+					if "".join(line) == "":
+						line = re.findall(r"Ports:(.*)", l) # In case it doesn't work in regex this may work 
+					get_open(line)
 		file.close()
 	except FileNotFoundError:
 		print("\n",RED,"[!] No such file or directory: {}".format(nameFile))
